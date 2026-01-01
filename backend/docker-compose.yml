@@ -1,0 +1,33 @@
+﻿services:
+  #The Vector Database for 67 thousand corpus 
+  qdrant:
+    image: qdrant/qdrant:latest
+    container_name: qdrant_db
+    ports:
+      - "6333:6333"
+      - "6334:6334" # Ensure this line exists!
+    volumes:
+      - ./qdrant_data:/qdrant/storage
+    
+  receipt-service:
+    build:
+      context: .
+      dockerfile: WebApplication1/Dockerfile
+    container_name: receipt_web_api
+    environment:
+      - Qdrant_Url=http://qdrant_db:6334
+      - OLLAMA_URL=http://host.docker.internal:11434
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=http://+:8080
+      - FileSettings__DataFilePath=/app/data/data.csv
+      - GroqApiKey=${GROQ_API_KEY}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    ports:
+      - "5000:8080"
+    volumes:
+      - ./data:/app/data
+    depends_on:
+      - qdrant
+
+
